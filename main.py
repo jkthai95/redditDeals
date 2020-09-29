@@ -1,14 +1,13 @@
-import RedditParser
+import RedditDeals
 
-subreddits = ["buildapcsales", "GameDeals"]
-reddit_parsers = []
 
+subreddits = ["buildapcsales", "GameDeals", "gamedeals"]
 
 def main():
-    for subreddit in subreddits:
-        reddit_parsers.append(RedditParser.RedditParser(subreddit))
+    reddit_deals = RedditDeals.RedditDeals(subreddits)
+    print(" ")
 
-
+    reddit_deals.acquire_deals()
 
 
 if __name__ == '__main__':
