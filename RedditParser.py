@@ -4,7 +4,7 @@ import numpy as np
 
 
 class RedditParser:
-    def __init__(self, subreddit, limit, deal_threshold):
+    def __init__(self, subreddit, limit, deal_threshold, upvote_threshold):
         # Title of subreddit
         self.subreddit = subreddit
 
@@ -13,6 +13,9 @@ class RedditParser:
 
         # Threshold used to filter out lower deals
         self.deal_threshold = deal_threshold  # (% off)
+
+        # Threshold used to filter out less upvoted deals
+        self.upvote_threshold = float(upvote_threshold)/100  # (ratio between upvotes and downvotes)
 
         print("(RedditParser) Initialized for %s." % subreddit)
 
@@ -43,14 +46,22 @@ class RedditParser:
 
         # Parse each submission for deals
         for submission in submissions:
-            # acquire deals
+            # Check if submission passes upvote threshold.
+            if submission.upvote_ratio < self.upvote_threshold:
+                # Upvote threshold not passed.
+                continue
+
+            # Acquire deals
             deals = []
             self.acquire_deal(submission.title, deals)
             deals = np.array(deals)
 
-            # Deal is better than specified threshold
+            # Check if deal is better than deal threshold.
             if any(deals > self.deal_threshold):
-                submission_deals[submission.title] = submission.url
+                # Found deal better than threshold
+                # submission_deals[submission.title] = submission.url       # links to deal
+                submission_deals[submission.title] = \
+                    "https://www.reddit.com" + submission.permalink   # links to reddit submission
 
         return submission_deals
 

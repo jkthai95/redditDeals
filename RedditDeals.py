@@ -2,12 +2,15 @@ import RedditParser
 
 
 class RedditDeals:
-    def __init__(self, subreddits, limit=3, deal_threshold=30):
+    def __init__(self, subreddits, limit=100, deal_threshold=50, upvote_threshold=70):
         # Maximum no. of submissions to parse for each subreddit
         self.limit = limit
 
         # Threshold used to filter out lower deals
         self.deal_threshold = deal_threshold    # (% off)
+
+        # Threshold used to filter out less upvoted deals
+        self.upvote_threshold = upvote_threshold  # (% ratio between upvotes and downvotes)
 
         # Ensure each subreddit is unique
         self.subreddits = self.acquire_unique_subreddits(subreddits)
@@ -15,7 +18,10 @@ class RedditDeals:
         # Create parser for each subreddit
         self.reddit_parsers = []
         for subreddit in self.subreddits:
-            self.reddit_parsers.append(RedditParser.RedditParser(subreddit, self.limit, self.deal_threshold))
+            self.reddit_parsers.append(RedditParser.RedditParser(subreddit,
+                                                                 self.limit,
+                                                                 self.deal_threshold,
+                                                                 self.upvote_threshold))
 
         print("(RedditDeals) Initialized.")
 
