@@ -2,20 +2,20 @@ import RedditParser
 
 
 class RedditDeals:
-    def __init__(self, subreddits):
+    def __init__(self, subreddits, limit=3, deal_threshold=30):
+        # Maximum no. of submissions to parse for each subreddit
+        self.limit = limit
+
+        # Threshold used to filter out lower deals
+        self.deal_threshold = deal_threshold    # (% off)
+
         # Ensure each subreddit is unique
         self.subreddits = self.acquire_unique_subreddits(subreddits)
 
         # Create parser for each subreddit
         self.reddit_parsers = []
         for subreddit in self.subreddits:
-            self.reddit_parsers.append(RedditParser.RedditParser(subreddit))
-
-        # Maximum number of pages to parse for each subreddit
-        self.num_pages_parsed = 2
-
-        # Threshold used to filter out lower deals
-        self.deal_threshold = 30    # (% off)
+            self.reddit_parsers.append(RedditParser.RedditParser(subreddit, self.limit, self.deal_threshold))
 
         print("(RedditDeals) Initialized.")
 
@@ -48,6 +48,11 @@ class RedditDeals:
         for reddit_parser in self.reddit_parsers:
             print("Acquiring deals from %s." % reddit_parser.subreddit)
 
-            reddit_parser.acquire_titles()
+            # Acquire filtered deals
+            submission_deals = reddit_parser.acquire_submission_deals()
+
+            # Display deals
+            for title, url in submission_deals.items():
+                print("{} ({})".format(title, url))
 
             print(" ")
