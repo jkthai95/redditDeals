@@ -17,8 +17,6 @@ class RedditParser:
         # Threshold used to filter out less upvoted deals
         self.upvote_threshold = float(upvote_threshold)/100  # (ratio between upvotes and downvotes)
 
-        print("(RedditParser) Initialized for %s." % subreddit)
-
     def acquire_submission_deals(self):
         """
         Acquires all deals better than deal threshold.
@@ -27,16 +25,19 @@ class RedditParser:
         # Holds results
         submission_deals = dict()  # (title, url)
 
-        # TODO: Acquire login from GUI
-        # For now, we acquire username and password from a file.
+        # TODO: Acquire data from GUI
+        # For now, we acquire necessary data from a file.
         with open('./redditLogin', 'r') as fp:
+            client_id = fp.readline().strip()
+            client_secret = fp.readline().strip()
+            user_agent = fp.readline().strip()
             username = fp.readline().strip()
             password = fp.readline().strip()
 
         # Acquire submissions from subreddit
-        reddit = praw.Reddit(client_id='2jCK-om4rxiEqA',
-                             client_secret='h5AGIO8gQOlYPm0DuNXuFSnLouQ',
-                             user_agent='Reddit Deals',
+        reddit = praw.Reddit(client_id=client_id,
+                             client_secret=client_secret,
+                             user_agent=user_agent,
                              redirect_uri="http://localhost:8080",
                              username=username,
                              password=password)

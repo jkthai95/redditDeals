@@ -1,4 +1,5 @@
 import RedditParser
+import Database
 
 
 class RedditDeals:
@@ -22,9 +23,8 @@ class RedditDeals:
                                                                  self.limit,
                                                                  self.deal_threshold,
                                                                  self.upvote_threshold))
-
-        print("(RedditDeals) Initialized.")
-
+        # Create mySQL database to hold data
+        self.database = Database.Database()
 
     def acquire_unique_subreddits(self, subreddits):
         """
@@ -57,8 +57,18 @@ class RedditDeals:
             # Acquire filtered deals
             submission_deals = reddit_parser.acquire_submission_deals()
 
-            # Display deals
+            # Insert deals into table
             for title, url in submission_deals.items():
-                print("{} ({})".format(title, url))
+                reddit_deal = Database.RedditDealStruct(title, url)
+                self.database.insert_deal(reddit_deal)
+                # print("{} ({})".format(title, url))
 
-            print(" ")
+    def print_deals(self):
+        """
+        Prints table of reddit deals.
+        """
+        results = self.database.get_table()
+        for row in results:
+            print(row)
+
+
