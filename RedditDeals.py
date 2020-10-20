@@ -1,6 +1,7 @@
 import RedditParser
 import Database
-
+import Utils
+import praw
 
 class RedditDeals:
     def __init__(self, subreddits, limit=100, deal_threshold=50, upvote_threshold=70):
@@ -16,13 +17,25 @@ class RedditDeals:
         # Ensure each subreddit is unique
         self.subreddits = self.acquire_unique_subreddits(subreddits)
 
+        # Acquire login information from text file.
+        login_info = Utils.get_login_info()
+
+        # Acquire submissions from subreddit
+        self.reddit = praw.Reddit(client_id=login_info['client_id'],
+                             client_secret=login_info['client_secret'],
+                             user_agent=login_info['user_agent'],
+                             redirect_uri="http://localhost:8080",
+                             username=login_info['username'],
+                             password=login_info['password'])
+
         # Create parser for each subreddit
         self.reddit_parsers = []
         for subreddit in self.subreddits:
             self.reddit_parsers.append(RedditParser.RedditParser(subreddit,
                                                                  self.limit,
                                                                  self.deal_threshold,
-                                                                 self.upvote_threshold))
+                                                                 self.upvote_threshold,
+                                                                 self.reddit))
         # Create mySQL database to hold data
         self.database = Database.Database()
 
@@ -58,8 +71,8 @@ class RedditDeals:
             submission_deals = reddit_parser.acquire_submission_deals()
 
             # Insert deals into table
-            for title, url in submission_deals.items():
-                reddit_deal = Database.RedditDealStruct(title, url)
+            for submission_id in submission_deals:
+                reddit_deal = Database.RedditDealStruct('"%s"' % submission_id)     # Encapsulate with " for mySQL commands
                 self.database.insert_deal(reddit_deal)
                 # print("{} ({})".format(title, url))
 
@@ -69,6 +82,9 @@ class RedditDeals:
         """
         results = self.database.get_table()
         for row in results:
-            print(row)
+            reddit_submission = self.reddit.submission(id=row[0])
+            title = reddit_submission.title
+            permalink = reddit_submission.permalink
+            print("{} ({}) ".format(title, permalink))
 
 

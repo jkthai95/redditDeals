@@ -4,7 +4,30 @@ import numpy as np
 import Utils
 
 class RedditParser:
-    def __init__(self, subreddit, limit, deal_threshold, upvote_threshold):
+    def __init__(self, subreddit, limit, deal_threshold, upvote_threshold, reddit=None):
+        """
+
+        :param subreddit: Title of subreddit
+        :param limit: Maximum no. of submissions to parse.
+        :param deal_threshold: Threshold for percent off.
+        :param upvote_threshold: Threshold for upvote to downvote ratio.
+        :param reddit: Python Reddit API wrapper object.
+        """
+        if reddit:
+            # Link reddit instance
+            self.reddit = reddit
+        else:
+            # Acquire login information from text file.
+            login_info = Utils.get_login_info()
+
+            # Create reddit instance
+            self.reddit = praw.Reddit(client_id=login_info['client_id'],
+                                      client_secret=login_info['client_secret'],
+                                      user_agent=login_info['user_agent'],
+                                      redirect_uri="http://localhost:8080",
+                                      username=login_info['username'],
+                                      password=login_info['password'])
+
         # Title of subreddit
         self.subreddit = subreddit
 
@@ -20,23 +43,12 @@ class RedditParser:
     def acquire_submission_deals(self):
         """
         Acquires all deals better than deal threshold.
-        :return: Dictionary of submissions (title, url)
+        :return: List of reddit submission IDs
         """
         # Holds results
-        submission_deals = dict()  # (title, url)
+        submission_deals = []
 
-        # Acquire login information from text file.
-        login_info = Utils.get_login_info()
-
-        # Acquire submissions from subreddit
-        reddit = praw.Reddit(client_id=login_info['client_id'],
-                             client_secret=login_info['client_secret'],
-                             user_agent=login_info['user_agent'],
-                             redirect_uri="http://localhost:8080",
-                             username=login_info['username'],
-                             password=login_info['password'])
-
-        subreddit = reddit.subreddit(self.subreddit)
+        subreddit = self.reddit.subreddit(self.subreddit)
         submissions = subreddit.new(limit=self.limit)
 
         # Parse each submission for deals
@@ -53,10 +65,12 @@ class RedditParser:
 
             # Check if deal is better than deal threshold.
             if any(deals > self.deal_threshold):
-                # Found deal better than threshold
-                # submission_deals[submission.title] = submission.url       # links to deal
-                submission_deals[submission.title] = \
-                    "https://www.reddit.com" + submission.permalink   # links to reddit submission
+                # Deal threshold not passed.
+                continue
+
+            # Deal passed all thresholds, save deal to list
+            # submission_deals.append(submission.permalink)
+            submission_deals.append(submission.id)
 
         return submission_deals
 

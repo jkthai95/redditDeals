@@ -2,9 +2,8 @@ import pymysql
 import Utils
 
 class RedditDealStruct:
-    def __init__(self, title='NA', reddit_link='NA'):
-        self.title = title
-        self.reddit_link = reddit_link
+    def __init__(self, id='NA'):
+        self.id = id
 
         # List of members
         self.__members = [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
@@ -28,6 +27,8 @@ class Database:
     def __init__(self):
         # Acquire login information from text file.
         login_info = Utils.get_login_info()
+        self.username = login_info['username']
+        self.password = login_info['password']
 
         # Create database if it does not exist
         self.__create_database()
@@ -52,20 +53,10 @@ class Database:
         self.database.close()
 
     def __create_database(self):
-
-        # TODO: Acquire data from GUI
-        # For now, we acquire necessary data from a file.
-        with open('./redditLogin', 'r') as fp:
-            client_id = fp.readline().strip()
-            client_secret = fp.readline().strip()
-            user_agent = fp.readline().strip()
-            username = fp.readline().strip()
-            password = fp.readline().strip()
-
         # Open connection
         connection = pymysql.connect(host='localhost',
-                                     user=username,
-                                     passwd=password)
+                                     user=self.username,
+                                     passwd=self.password)
         # Prepare cursor object
         cursor = connection.cursor()
 
@@ -100,7 +91,7 @@ class Database:
         Inserts reddit deal into mySQL database.
         :param reddit_deal: instance of RedditDealStruct()
         """
-        sql = "INSERT INTO DEALS ({}) VALUES {}".format(", ".join(self.columns), tuple(reddit_deal.acquire_values()))
+        sql = "INSERT INTO DEALS ({}) VALUES ({})".format(", ".join(self.columns), ", ".join(reddit_deal.acquire_values()))
         try:
             self.cursor.execute(sql)
             self.database.commit()
