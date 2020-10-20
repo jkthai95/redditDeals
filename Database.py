@@ -1,4 +1,5 @@
 import pymysql
+import Utils
 
 class RedditDealStruct:
     def __init__(self, title='NA', reddit_link='NA'):
@@ -22,24 +23,19 @@ class RedditDealStruct:
         """
         return [getattr(self, member) for member in self.__members]
 
+
 class Database:
     def __init__(self):
-        # TODO: Acquire data from GUI
-        # For now, we acquire necessary data from a file.
-        with open('./redditLogin', 'r') as fp:
-            client_id = fp.readline().strip()
-            client_secret = fp.readline().strip()
-            user_agent = fp.readline().strip()
-            username = fp.readline().strip()
-            password = fp.readline().strip()
+        # Acquire login information from text file.
+        login_info = Utils.get_login_info()
 
         # Create database if it does not exist
         self.__create_database()
 
         # Open database connection
         self.database = pymysql.connect(host='localhost',
-                                        user=username,
-                                        passwd=password,
+                                        user=login_info['username'],
+                                        passwd=login_info['password'],
                                         db='redditDealsDB')
 
         # Prepare cursor object

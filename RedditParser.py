@@ -1,7 +1,7 @@
 import praw
 from parse import parse
 import numpy as np
-
+import Utils
 
 class RedditParser:
     def __init__(self, subreddit, limit, deal_threshold, upvote_threshold):
@@ -25,22 +25,16 @@ class RedditParser:
         # Holds results
         submission_deals = dict()  # (title, url)
 
-        # TODO: Acquire data from GUI
-        # For now, we acquire necessary data from a file.
-        with open('./redditLogin', 'r') as fp:
-            client_id = fp.readline().strip()
-            client_secret = fp.readline().strip()
-            user_agent = fp.readline().strip()
-            username = fp.readline().strip()
-            password = fp.readline().strip()
+        # Acquire login information from text file.
+        login_info = Utils.get_login_info()
 
         # Acquire submissions from subreddit
-        reddit = praw.Reddit(client_id=client_id,
-                             client_secret=client_secret,
-                             user_agent=user_agent,
+        reddit = praw.Reddit(client_id=login_info['client_id'],
+                             client_secret=login_info['client_secret'],
+                             user_agent=login_info['user_agent'],
                              redirect_uri="http://localhost:8080",
-                             username=username,
-                             password=password)
+                             username=login_info['username'],
+                             password=login_info['password'])
 
         subreddit = reddit.subreddit(self.subreddit)
         submissions = subreddit.new(limit=self.limit)
