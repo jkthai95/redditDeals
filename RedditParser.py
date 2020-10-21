@@ -1,7 +1,8 @@
 import praw
 from parse import parse
-import numpy as np
+import Database
 import Utils
+
 
 class RedditParser:
     def __init__(self, subreddit, limit, deal_threshold, upvote_threshold, reddit=None):
@@ -43,7 +44,7 @@ class RedditParser:
     def acquire_submission_deals(self):
         """
         Acquires all deals better than deal threshold.
-        :return: List of reddit submission IDs
+        :return: List of praw.Reddit.submission()
         """
         # Holds results
         submission_deals = []
@@ -58,31 +59,46 @@ class RedditParser:
                 # Upvote threshold not passed.
                 continue
 
-            # Acquire deals
-            deals = []
-            self.acquire_deal(submission.title, deals)
-            deals = np.array(deals)
+            # Acquire best deals
+            best_deal = self.acquire_best_deal(submission.title)
 
             # Check if deal is better than deal threshold.
-            if any(deals > self.deal_threshold):
+            if best_deal < self.deal_threshold:
                 # Deal threshold not passed.
                 continue
 
-            # Deal passed all thresholds, save deal to list
-            # submission_deals.append(submission.permalink)
-            submission_deals.append(submission.id)
+            # Deal passed all thresholds.
+
+            # Copy over desired data from praw.Reddit.submissions()
+            reddit_deal = Database.RedditDealStruct()
+            reddit_deal.deal = best_deal    # Add best deal to submission class
+            members = reddit_deal.acquire_members()
+            for member in members:
+                try:
+                    data = getattr(submission, member)
+                    if isinstance(data, str):
+                        # Encapsulate string with ' for SQL command.
+                        setattr(reddit_deal, member, "'%s'" % data)
+                    else:
+                        setattr(reddit_deal, member, data)
+                except:
+                    # Member does not exist in praw.Reddit.submissions()
+                    pass
+
+            # Save deal to list
+            submission_deals.append(reddit_deal)
 
         return submission_deals
 
-    def acquire_deal(self, title, deals):
+    def acquire_best_deal(self, title):
         """
         Modifies "deals" to contain all deals (percentages).
         :param title: String to parse for deals.
-        :param deals: List of percentages.
-        :return:
+        :return: Best deal found in title.
         """
         # Note: currently, assumes specific format. "<ITEM> (<DEAL>%)"
         # TODO: Add ability to parse title without % off. Ex: (10.00 - 5.00), ($10.00 - $5.00)
+        best_deal = 0
         parsed_title = title.split("(")
         for element in parsed_title:
             element = element.split(")")
@@ -103,6 +119,9 @@ class RedditParser:
                 if parsed_element:
                     deal = abs(parsed_element[1])
 
-                # Add deal to list if found.
                 if deal:
-                    deals.append(abs(deal))
+                    # Deal found. Save best deal.
+                    if deal > best_deal:
+                        best_deal = deal
+
+        return best_deal
