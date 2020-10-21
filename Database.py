@@ -1,7 +1,7 @@
 import pymysql
 import Utils
 
-maximum_string_size = 255
+maximum_string_size = 1000   # Note: Maximum for CHAR is 255 and VARCHAR is 65535
 
 class RedditDealStruct:
     def __init__(self, id='NA', title='NA', permalink='NA', deal=0):
@@ -98,7 +98,7 @@ class Database:
             if isinstance(data, int):
                 columns.append(str(member) + ' int')
             elif isinstance(data, str):
-                columns.append(str(member) + ' CHAR({})'.format(maximum_string_size))
+                columns.append(str(member) + ' VARCHAR({})'.format(maximum_string_size))
 
         # Create table
         sql = "CREATE TABLE DEALS ({})".format(", ".join(columns))

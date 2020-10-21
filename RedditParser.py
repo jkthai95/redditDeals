@@ -77,6 +77,9 @@ class RedditParser:
                 try:
                     data = getattr(submission, member)
                     if isinstance(data, str):
+                        # Replace ' with '' for SQL commands
+                        data = data.replace("\'", "\'\'")
+
                         # Encapsulate string with ' for SQL command.
                         setattr(reddit_deal, member, "'%s'" % data)
                     else:
